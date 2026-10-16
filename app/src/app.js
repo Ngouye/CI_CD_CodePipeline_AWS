@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('node:path');
+const escapeHtml = require('escape-html');
 const express = require('express');
 const helmet = require('helmet');
 
@@ -12,9 +13,6 @@ const SECURITY_GATES = [
   'Image — Dockle, Trivy',
   'DAST — OWASP ZAP',
 ];
-
-const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
 
 function getInfo() {
   return {

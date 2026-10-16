@@ -133,8 +133,13 @@ jobs:
       - run: bash scripts/install-tools.sh trivy dockle
       - run: bash scripts/scan-sca.sh
 
+      # ECR Public limite les pulls anonymes depuis les runners GitHub (429) : on passe par Docker Hub.
       - name: Build de l'image
-        run: docker build --build-arg APP_VERSION="$GITHUB_SHA" --tag "$IMAGE" app
+        run: |
+          docker build \
+            --build-arg NODE_REGISTRY=docker.io/library \
+            --build-arg APP_VERSION="$GITHUB_SHA" \
+            --tag "$IMAGE" app
 
       - run: bash scripts/scan-image.sh "$IMAGE"
 

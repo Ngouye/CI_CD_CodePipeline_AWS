@@ -1,13 +1,15 @@
-# syntax=docker/dockerfile:1
+# Registre de l'image de base : ECR Public par défaut (sans limite depuis AWS/CodeBuild).
+# GitHub Actions passe --build-arg NODE_REGISTRY=docker.io/library (runners non limités sur Docker Hub).
+ARG NODE_REGISTRY=public.ecr.aws/docker/library
 
 # ---- Étape 1 : dépendances de production uniquement --------------------------
-FROM public.ecr.aws/docker/library/node:22-alpine AS deps
+FROM ${NODE_REGISTRY}/node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
 # ---- Étape 2 : image d'exécution minimale ------------------------------------
-FROM public.ecr.aws/docker/library/node:22-alpine
+FROM ${NODE_REGISTRY}/node:22-alpine
 
 ARG APP_VERSION=dev
 LABEL org.opencontainers.image.title="devsecops-demo-app" \
