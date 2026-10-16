@@ -1,0 +1,44 @@
+{
+  "family": "__TASK_FAMILY__",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "runtimePlatform": {
+    "operatingSystemFamily": "LINUX",
+    "cpuArchitecture": "X86_64"
+  },
+  "executionRoleArn": "__EXECUTION_ROLE_ARN__",
+  "taskRoleArn": "__TASK_ROLE_ARN__",
+  "containerDefinitions": [
+    {
+      "name": "__CONTAINER_NAME__",
+      "image": "<IMAGE1_NAME>",
+      "essential": true,
+      "readonlyRootFilesystem": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "PORT", "value": "8080" },
+        { "name": "APP_VERSION", "value": "__APP_VERSION__" },
+        { "name": "DEPLOY_TARGET", "value": "Amazon ECS Fargate" }
+      ],
+      "linuxParameters": {
+        "initProcessEnabled": true,
+        "capabilities": { "drop": ["ALL"] }
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "__LOG_GROUP__",
+          "awslogs-region": "__AWS_REGION__",
+          "awslogs-stream-prefix": "app"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+# Copier en terraform.tfvars puis adapter.
+aws_region        = "eu-west-3"
+project_name      = "devsecops-cicd"
+environment       = "demo"
+github_repository = "mon-compte-github/CI_CD_CodePipeline_AWS"
+github_branch     = "main"
+
+# Ajoute une approbation manuelle avant la mise en production.
+require_manual_approval = false
+
+# Canary ECS : 10 % du trafic pendant 5 minutes, puis 100 %.
+# ecs_deployment_config = "CodeDeployDefault.ECSCanary10Percent5Minutes"
+
+# SonarQube / SonarCloud (optionnel) :
+# sonar_host_url         = "https://sonarcloud.io"
+# sonar_organization     = "mon-organisation"
+# sonar_project_key      = "mon-organisation_CI_CD_CodePipeline_AWS"
+# sonar_token_secret_arn = "arn:aws:secretsmanager:eu-west-3:123456789012:secret:sonar-token-AbCdEf"

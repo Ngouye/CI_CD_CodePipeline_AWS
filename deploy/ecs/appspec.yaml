@@ -1,0 +1,13 @@
+# AppSpec CodeDeploy pour ECS (blue/green).
+# <TASK_DEFINITION> est remplacé par CodePipeline (action CodeDeployToECS)
+# par l'ARN de la révision de task definition fraîchement enregistrée.
+version: 0.0
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: "<TASK_DEFINITION>"
+        LoadBalancerInfo:
+          ContainerName: "__CONTAINER_NAME__"
+          ContainerPort: 8080
+        PlatformVersion: "LATEST"

@@ -1,0 +1,18 @@
+# Étape Security-Scans / IaC : Checkov + tfsec sur Terraform, Dockerfile et workflows.
+version: 0.2
+
+env:
+  shell: bash
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+    commands:
+      - bash scripts/install-tools.sh checkov tfsec
+  build:
+    commands:
+      - bash scripts/scan-iac.sh
+  post_build:
+    commands:
+      - bash scripts/upload-reports.sh iac

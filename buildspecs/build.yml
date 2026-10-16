@@ -1,0 +1,61 @@
+# Étape Build : tests unitaires, SCA, build Docker, scan d'image, push ECR
+# et génération des artefacts CodeDeploy (ECS + EC2).
+# L'image n'est poussée dans ECR que si TOUS les contrôles sont passés.
+version: 0.2
+
+env:
+  shell: bash
+  exported-variables:
+    - IMAGE_TAG
+    - IMAGE_URI
+
+phases:
+  install:
+    commands:
+      - bash scripts/install-tools.sh trivy dockle
+  pre_build:
+    commands:
+      - export IMAGE_TAG="$(echo "${COMMIT_ID:-$CODEBUILD_RESOLVED_SOURCE_VERSION}" | cut -c1-12)"
+      - export IMAGE_URI="${ECR_REPOSITORY_URI}:${IMAGE_TAG}"
+      - echo "Image cible : $IMAGE_URI"
+      - aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "${ECR_REPOSITORY_URI%%/*}"
+  build:
+    commands:
+      - bash scripts/scan-sca.sh
+      - bash scripts/run-unit-tests.sh
+      - docker build --pull --build-arg APP_VERSION="$IMAGE_TAG" --tag "$IMAGE_URI" app
+      - bash scripts/scan-image.sh "$IMAGE_URI"
+      # Tags immuables : si ce commit a déjà été poussé (relance du pipeline), on réutilise l'image.
+      - |
+        if aws ecr describe-images --repository-name "${ECR_REPOSITORY_URI#*/}" --image-ids imageTag="$IMAGE_TAG" >/dev/null 2>&1; then
+          echo "Image $IMAGE_URI déjà présente dans ECR : push ignoré."
+        else
+          docker push "$IMAGE_URI"
+        fi
+      - bash scripts/package-deploy-artifacts.sh
+  post_build:
+    commands:
+      - bash scripts/upload-reports.sh build
+
+reports:
+  unit-tests:
+    base-directory: app/reports
+    files:
+      - junit.xml
+    file-format: JUNITXML
+  coverage:
+    base-directory: app/coverage
+    files:
+      - clover.xml
+    file-format: CLOVERXML
+
+artifacts:
+  secondary-artifacts:
+    BuildEcsArtifact:
+      base-directory: dist/ecs
+      files:
+        - "**/*"
+    BuildEc2Artifact:
+      base-directory: dist/ec2
+      files:
+        - "**/*"

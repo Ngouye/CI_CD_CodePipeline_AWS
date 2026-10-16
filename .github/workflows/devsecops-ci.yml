@@ -1,0 +1,152 @@
+# CI "shift-left" : chaque Pull Request passe les mêmes contrôles que le pipeline
+# AWS CodePipeline (mêmes scripts), avant même d'atteindre la branche main.
+name: DevSecOps CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: devsecops-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REPORTS_DIR: ${{ github.workspace }}/reports
+
+jobs:
+  unit-tests:
+    name: Tests unitaires
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - run: npm ci --ignore-scripts
+      - run: npm run test:ci
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: unit-tests
+          path: |
+            app/reports/
+            app/coverage/lcov.info
+
+  secrets:
+    name: Secrets (Gitleaks, TruffleHog)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # tout l'historique Git
+
+      - run: bash scripts/install-tools.sh gitleaks trufflehog
+      - run: bash scripts/scan-secrets.sh
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: reports-secrets
+          path: reports/
+
+  sast:
+    name: SAST (Semgrep, Bearer, SonarQube)
+    runs-on: ubuntu-24.04
+    env:
+      # SonarQube est ignoré si ces valeurs ne sont pas configurées dans le dépôt.
+      SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+      SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
+      SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - run: bash scripts/install-tools.sh semgrep bearer
+      - run: bash scripts/scan-sast.sh
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: reports-sast
+          path: reports/
+
+  iac:
+    name: IaC (Terraform, Checkov, tfsec)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.16.6"
+
+      - name: terraform fmt & validate
+        run: |
+          terraform fmt -check -recursive infra/terraform
+          terraform -chdir=infra/terraform init -backend=false -input=false
+          terraform -chdir=infra/terraform validate
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - run: bash scripts/install-tools.sh checkov tfsec
+      - run: bash scripts/scan-iac.sh
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: reports-iac
+          path: reports/
+
+  container:
+    name: SCA, image & DAST (Trivy, Dockle, OWASP ZAP)
+    runs-on: ubuntu-24.04
+    needs: unit-tests
+    env:
+      IMAGE: devsecops-app:ci
+    steps:
+      - uses: actions/checkout@v7
+
+      - run: bash scripts/install-tools.sh trivy dockle
+      - run: bash scripts/scan-sca.sh
+
+      - name: Build de l'image
+        run: docker build --build-arg APP_VERSION="$GITHUB_SHA" --tag "$IMAGE" app
+
+      - run: bash scripts/scan-image.sh "$IMAGE"
+
+      - name: DAST sur l'image lancée localement
+        env:
+          ZAP_DOCKER_NETWORK: host
+        run: |
+          docker run -d --name app --read-only --cap-drop ALL -p 8080:8080 "$IMAGE"
+          bash scripts/scan-dast.sh http://localhost:8080
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: reports-container
+          path: reports/

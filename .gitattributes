@@ -1,0 +1,4 @@
+# Fins de ligne LF partout : les scripts shell s'exécutent sous Linux (CodeBuild, EC2).
+* text=auto eol=lf
+*.png binary
+*.jpg binary

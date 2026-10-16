@@ -1,0 +1,53 @@
+{
+  "name": "devsecops-demo-app",
+  "version": "1.0.0",
+  "description": "Application Node.js de démonstration déployée par le pipeline AWS CodePipeline DevSecOps",
+  "private": true,
+  "license": "MIT",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "jest",
+    "test:ci": "jest --ci --coverage"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/server.js"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "clover"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "lines": 80
+      }
+    },
+    "reporters": [
+      "default",
+      [
+        "jest-junit",
+        {
+          "outputDirectory": "reports",
+          "outputName": "junit.xml"
+        }
+      ]
+    ]
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "helmet": "^8.3.0"
+  },
+  "devDependencies": {
+    "jest": "^30.5.2",
+    "jest-junit": "^16.0.0",
+    "supertest": "^7.3.1"
+  }
+}

@@ -1,0 +1,27 @@
+# Configuration Checkov. Chaque exception est volontaire et justifiée :
+# elles correspondent à des choix de coût/simplicité propres à une démo.
+framework:
+  - terraform
+  - dockerfile
+  - github_actions
+skip-path:
+  - app/node_modules
+  - infra/terraform/.terraform
+compact: true
+quiet: true
+skip-check:
+  # Démo sans nom de domaine ni certificat ACM : ALB en HTTP.
+  - CKV_AWS_2      # Listener ALB en HTTPS
+  - CKV_AWS_103    # TLS 1.2 minimum sur le listener (sans objet en HTTP)
+  - CKV2_AWS_20    # Redirection HTTP -> HTTPS
+  - CKV_AWS_378    # Target groups en HTTP (pas de terminaison TLS de bout en bout)
+  # Application publique : port 80 ouvert sur Internet, uniquement sur l'ALB.
+  - CKV_AWS_260
+  # Hors périmètre de la démo (coût) — à activer en production.
+  - CKV_AWS_91     # Access logs de l'ALB
+  - CKV2_AWS_28    # AWS WAF devant l'ALB
+  - CKV_AWS_150    # Protection contre la suppression de l'ALB (environnement éphémère)
+  - CKV_AWS_18     # Access logs S3
+  - CKV_AWS_144    # Réplication S3 inter-régions
+  - CKV2_AWS_62    # Notifications d'événements S3
+  - CKV_AWS_224    # Chiffrement des sessions ECS Exec (ECS Exec désactivé)

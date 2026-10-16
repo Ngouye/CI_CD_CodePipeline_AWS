@@ -1,0 +1,28 @@
+# Node
+node_modules/
+app/coverage/
+app/reports/
+
+# Rapports et artefacts générés par les scripts
+reports/
+dist/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+*.tfplan
+
+# Notes personnelles (jamais publiées sur GitHub)
+EXPLICATION_DU_PROJET.md
+
+# Divers
+.env
+.env.*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,4 @@
+# Exceptions Trivy (SCA + image). Une CVE par ligne, toujours avec justification
+# et date de revue, par exemple :
+#
+# CVE-2024-00000 exp:2026-12-31  # non exploitable : fonction vulnérable jamais appelée

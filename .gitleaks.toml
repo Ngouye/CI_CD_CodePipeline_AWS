@@ -1,0 +1,13 @@
+title = "Configuration Gitleaks du projet"
+
+# Règles officielles Gitleaks + exceptions ci-dessous.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Fichiers générés sans secret (empreintes d'intégrité npm, rapports de scan)"
+paths = [
+  '''(^|/)package-lock\.json$''',
+  '''(^|/)reports/''',
+  '''(^|/)coverage/''',
+]

@@ -1,0 +1,14 @@
+# Étape DAST : vérifie que la nouvelle version est bien servie puis lance
+# OWASP ZAP (baseline) sur les environnements ECS et EC2 déployés.
+version: 0.2
+
+env:
+  shell: bash
+
+phases:
+  build:
+    commands:
+      - bash scripts/scan-dast.sh
+  post_build:
+    commands:
+      - bash scripts/upload-reports.sh dast

@@ -1,0 +1,19 @@
+# Étape Security-Scans / SAST : Semgrep + Bearer + SonarQube (Quality Gate).
+version: 0.2
+
+env:
+  shell: bash
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+      python: 3.12
+    commands:
+      - bash scripts/install-tools.sh semgrep bearer
+  build:
+    commands:
+      - bash scripts/scan-sast.sh
+  post_build:
+    commands:
+      - bash scripts/upload-reports.sh sast

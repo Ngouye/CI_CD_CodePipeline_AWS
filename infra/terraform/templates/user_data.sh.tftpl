@@ -1,0 +1,12 @@
+#!/bin/bash
+# Amazon Linux 2023 : Docker + agent CodeDeploy (pas de SSH, accès via SSM Session Manager).
+set -euxo pipefail
+
+dnf install -y docker ruby
+systemctl enable --now docker
+
+cd /tmp
+curl -fsSL -o install "https://aws-codedeploy-${region}.s3.${region}.amazonaws.com/latest/install"
+chmod +x ./install
+./install auto
+systemctl enable --now codedeploy-agent
